@@ -6,6 +6,7 @@
     import { goto } from '$app/navigation';
     import PaymentModal from './PaymentModal.svelte';
     import JourneyChart from '$lib/components/JourneyChart.svelte';
+    import Leaderboard from '$lib/components/Leaderboard.svelte';
 
     // Complete profile step when viewing
     journey.completeStep('profile');
@@ -77,6 +78,11 @@
                 </button>
             {/each}
         </div>
+    </div>
+
+    <div class="leaderboard-section" in:scale="{{ duration: 400, delay: 500 }}">
+        <h2>Leaderboard</h2>
+        <Leaderboard />
     </div>
 
     <div class="history-section" in:scale="{{ duration: 400, delay: 600 }}">
@@ -218,7 +224,7 @@
         margin-top: 0.5rem;
     }
 
-    .badges-section, .history-section {
+    .badges-section, .history-section, .leaderboard-section {
         background: white;
         padding: 1.5rem;
         border-radius: 1rem;
