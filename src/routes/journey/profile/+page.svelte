@@ -4,11 +4,45 @@
     import { journey } from '$lib/stores/journey';
     import { fade, scale } from 'svelte/transition';
     import { goto } from '$app/navigation';
+    import PaymentModal from './PaymentModal.svelte';
+    import JourneyChart from '$lib/components/JourneyChart.svelte';
 
     // Complete profile step when viewing
     journey.completeStep('profile');
 
     let selectedBadge = null;
+    let showPaymentModal = false;
+    let currentOffset = {
+        type: '',
+        amount: 0,
+        cost: 0,
+        co2: 0
+    };
+
+    function handleOffset(type, costPer100kg, offsetAmount) {
+        const totalCO2 = $profile.totalCarbonFootprint;
+        const units = Math.ceil(totalCO2 / offsetAmount);
+        const cost = units * costPer100kg;
+
+        currentOffset = {
+            type,
+            cost,
+            co2: totalCO2
+        };
+        showPaymentModal = true;
+    }
+
+    function handlePaymentConfirm() {
+        // TODO: Integrate with payment provider
+        alert(`Thank you! Your payment of $${currentOffset.cost} for the ${currentOffset.type} project has been processed.\n\nYou have successfully offset ${currentOffset.co2.toFixed(1)} kg of CO₂!`);
+        showPaymentModal = false;
+
+        // Update profile with offset info
+        profile.update(p => ({
+            ...p,
+            carbonOffset: (p.carbonOffset || 0) + currentOffset.co2
+        }));
+    }
 </script>
 
 <div class="profile-page" in:fade="{{ duration: 400 }}">
@@ -20,6 +54,9 @@
         <div class="stat">
             <span class="label">Carbon Footprint</span>
             <span class="value">{$profile.totalCarbonFootprint.toFixed(1)} kg CO₂</span>
+            {#if $profile.carbonOffset}
+                <span class="offset-badge">Offset: {$profile.carbonOffset.toFixed(1)} kg</span>
+            {/if}
         </div>
         <div class="stat">
             <span class="label">Journeys</span>
@@ -44,13 +81,14 @@
 
     <div class="history-section" in:scale="{{ duration: 400, delay: 600 }}">
         <h2>Journey History</h2>
+        <JourneyChart journeys={$profile.journeys} />
         <div class="history-list">
             {#if $profile.journeys.length === 0}
                 <div class="empty-state">
                     No journeys recorded yet
                 </div>
             {/if}
-            {#each $profile.journeys as journey}
+            {#each [...$profile.journeys].sort((a, b) => new Date(b.date) - new Date(a.date)) as journey}
                 <div class="journey-card">
                     <div class="journey-header">
                         <div class="route">
@@ -69,9 +107,51 @@
                             <span class="label">CO₂</span>
                             <span class="value">{journey.carbonFootprint.toFixed(1)} kg</span>
                         </span>
+                        {#if journey.carbonOffset}
+                            <span class="stat">
+                                <span class="label">Offset</span>
+                                <span class="value offset">{journey.carbonOffset.toFixed(1)} kg</span>
+                            </span>
+                        {/if}
                     </div>
                 </div>
             {/each}
+        </div>
+    </div>
+
+    <div class="offset-section" in:scale="{{ duration: 400, delay: 700 }}">
+        <h2>Carbon Offset</h2>
+        <div class="offset-content">
+            <div class="offset-info">
+                <p>Your total carbon footprint is <strong>{$profile.totalCarbonFootprint.toFixed(1)} kg CO₂</strong></p>
+                <p>Offset your carbon footprint by contributing to verified environmental projects:</p>
+            </div>
+            <div class="offset-projects">
+                <div class="project-card">
+                    <h3>🌳 Forest Conservation</h3>
+                    <p>Support rainforest conservation projects in Brazil</p>
+                    <div class="project-details">
+                        <span class="price">$5 per 100kg CO₂</span>
+                        <button class="offset-button" on:click={() => handleOffset('forest', 5, 100)}>Offset Now</button>
+                    </div>
+                </div>
+                <div class="project-card">
+                    <h3>🌞 Solar Energy</h3>
+                    <p>Fund solar power installations in developing communities</p>
+                    <div class="project-details">
+                        <span class="price">$7 per 100kg CO₂</span>
+                        <button class="offset-button" on:click={() => handleOffset('solar', 7, 100)}>Offset Now</button>
+                    </div>
+                </div>
+                <div class="project-card">
+                    <h3>💨 Wind Power</h3>
+                    <p>Support wind farm development in rural areas</p>
+                    <div class="project-details">
+                        <span class="price">$6 per 100kg CO₂</span>
+                        <button class="offset-button" on:click={() => handleOffset('wind', 6, 100)}>Offset Now</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -85,6 +165,13 @@
         </button>
     </div>
 </div>
+
+<PaymentModal
+    show={showPaymentModal}
+    project={currentOffset}
+    onClose={() => showPaymentModal = false}
+    onConfirm={handlePaymentConfirm}
+/>
 
 <style>
     .profile-page {
@@ -119,6 +206,16 @@
         font-size: 1.5rem;
         font-weight: bold;
         color: var(--primary-color);
+    }
+
+    .offset-badge {
+        display: block;
+        font-size: 0.8rem;
+        color: #00b300;
+        background: rgba(0, 179, 0, 0.1);
+        padding: 0.25rem 0.5rem;
+        border-radius: 1rem;
+        margin-top: 0.5rem;
     }
 
     .badges-section, .history-section {
@@ -294,5 +391,105 @@
         .badges-grid {
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
         }
+    }
+    .offset-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .offset-info {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .offset-info p {
+        margin: 0.5rem 0;
+        color: #444;
+    }
+
+    .offset-projects {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .project-card {
+        background: rgba(0, 179, 0, 0.03);
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(0, 179, 0, 0.1);
+        transition: all 0.2s;
+    }
+
+    .project-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .project-card h3 {
+        margin: 0 0 0.5rem 0;
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .project-card p {
+        margin: 0 0 1rem 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .project-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+    }
+
+    .price {
+        font-weight: 500;
+        color: #444;
+    }
+
+    .offset-button {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .offset-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 179, 0, 0.2);
+    }
+
+    /* Payment Modal Styles */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        max-width: 400px;
+        width: 90%;
     }
 </style>
