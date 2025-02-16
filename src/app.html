@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🟢</text></svg>" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+		<style>
+			:root {
+				--primary-color: #00B300;
+				--primary-dark: #008000;
+				--background: #FAFAFA;
+				--text: #333333;
+				--accent: #FFD700;
+			}
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+				font-family: 'Nunito', sans-serif;
+			}
+
+			body {
+				min-height: 100vh;
+				background: var(--background);
+				color: var(--text);
+			}
+		</style>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>
