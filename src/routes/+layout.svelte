@@ -4,7 +4,13 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </svelte:head>
 
-<slot />
+<main>
+    <slot />
+</main>
+
+<footer>
+    <p>© 2025 All Rights Reserved | Tazeem Mahashin - Founder of Greenpoint</p>
+</footer>
 
 <style>
     :global(:root) {
@@ -16,5 +22,24 @@
         margin: 0;
         padding: 0;
         background: #f5f5f5;
+    }
+    main {
+        min-height: calc(100vh - 60px);
+    }
+
+    footer {
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border-top: 1px solid #f0f0f0;
+        margin-top: auto;
+    }
+
+    footer p {
+        color: #666;
+        font-size: 0.9rem;
+        text-align: center;
     }
 </style>
